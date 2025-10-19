@@ -6,6 +6,9 @@ use App\Filament\Admin\Resources\PengumumanResource\Pages;
 use App\Filament\Admin\Resources\PengumumanResource\RelationManagers;
 use App\Models\Pengumuman;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -28,16 +31,24 @@ class PengumumanResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('dibuat_oleh')
-                    ->required()
-                    ->numeric(),
+                // Field tersembunyi untuk simpan ID
+                Hidden::make('dibuat_oleh')
+                    ->default(fn() => auth()->id())
+                    ->required(),
+
+                // Field readonly untuk tampilkan nama user
+                TextInput::make('nama_user')
+                    ->label('Dibuat Oleh')
+                    ->default(fn() => auth()->user()->name)
+                    ->disabled() // readonly
+                    ->dehydrated(false), // jangan ikut submit, karena ID yang dikirim
                 Forms\Components\TextInput::make('judul')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('isi')
+                RichEditor::make('keterangan')
+                    ->label('Keterangan / Catatan')
                     ->required()
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
+                    ->columnSpan('full'), // optional biar full lebar
                 Forms\Components\DatePicker::make('tanggal')
                     ->required(),
             ]);
@@ -79,14 +90,14 @@ class PengumumanResource extends Resource
                 Tables\Actions\CreateAction::make(),
             ]);
     }
-    
+
     public static function getRelations(): array
     {
         return [
             //
         ];
     }
-    
+
     public static function getPages(): array
     {
         return [
@@ -94,14 +105,14 @@ class PengumumanResource extends Resource
             'create' => Pages\CreatePengumuman::route('/create'),
             'edit' => Pages\EditPengumuman::route('/{record}/edit'),
         ];
-    }  
+    }
     public static function getNavigationGroup(): ?string
     {
         return 'Informasi';
     }
-    
+
     public static function getNavigationSort(): ?int
     {
         return 1; // Paling atas di grup Informasi
-    }  
+    }
 }

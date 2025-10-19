@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             KelasSeeder::class,
             MapelSeeder::class,
             SiswaSeeder::class,
+            JadwalSeeder::class,
         ]);
     }
 }
