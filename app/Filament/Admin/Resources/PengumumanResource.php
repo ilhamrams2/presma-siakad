@@ -6,12 +6,14 @@ use App\Filament\Admin\Resources\PengumumanResource\Pages;
 use App\Filament\Admin\Resources\PengumumanResource\RelationManagers;
 use App\Models\Pengumuman;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -31,25 +33,31 @@ class PengumumanResource extends Resource
     {
         return $form
             ->schema([
-                // Field tersembunyi untuk simpan ID
+                // Field hidden untuk ID user yang membuat
                 Hidden::make('dibuat_oleh')
                     ->default(fn() => auth()->id())
                     ->required(),
 
-                // Field readonly untuk tampilkan nama user
+                // Field readonly untuk menampilkan nama user
                 TextInput::make('nama_user')
                     ->label('Dibuat Oleh')
                     ->default(fn() => auth()->user()->name)
                     ->disabled() // readonly
-                    ->dehydrated(false), // jangan ikut submit, karena ID yang dikirim
-                Forms\Components\TextInput::make('judul')
+                    ->dehydrated(false), // jangan ikut submit
+
+                // Judul pengumuman
+                TextInput::make('judul')
                     ->required()
                     ->maxLength(255),
-                RichEditor::make('keterangan')
+
+                // Keterangan / isi pengumuman
+                RichEditor::make('isi')
                     ->label('Keterangan / Catatan')
                     ->required()
-                    ->columnSpan('full'), // optional biar full lebar
-                Forms\Components\DatePicker::make('tanggal')
+                    ->columnSpan('full'),
+
+                // Tanggal pengumuman
+                DatePicker::make('tanggal')
                     ->required(),
             ]);
     }
@@ -58,9 +66,10 @@ class PengumumanResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('dibuat_oleh')
-                    ->numeric()
-                    ->sortable(),
+                TextColumn::make('pembuat.name') // ambil relasi user dan field name
+                    ->label('Dibuat Oleh')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('judul')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('tanggal')
