@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -59,12 +60,8 @@ class NilaiResource extends Resource
                 Select::make('mapel_id')
                     ->label('Mata Pelajaran')
                     ->required()
-                    ->options(function () {
-                        $guruId = auth()->id();
-                        return Mapel::where('guru_id', $guruId)
-                            ->pluck('nama_mapel', 'id')
-                            ->toArray();
-                    }),
+                    ->options(Mapel::pluck('nama_mapel', 'id')->toArray())
+                    ->searchable(),
 
                 // Input nilai
                 TextInput::make('nilai')
@@ -86,30 +83,47 @@ class NilaiResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('siswa_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('mapel_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('nilai')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('semester')
+                // Tampilkan nama siswa
+                TextColumn::make('siswa.user.name')
+                    ->label('Nama Siswa')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('tahun_ajaran')
+
+                // Tampilkan nama mapel
+                TextColumn::make('mapel.nama_mapel')
+                    ->label('Mata Pelajaran')
+                    ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+
+                TextColumn::make('nilai')
+                    ->numeric()
+                    ->sortable(),
+
+                TextColumn::make('semester')
+                    ->searchable(),
+
+                TextColumn::make('tahun_ajaran')
+                    ->searchable(),
+
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                // Filter per mapel guru login
+                Tables\Filters\SelectFilter::make('mapel_id')
+                    ->label('Mapel')
+                    ->options(function () {
+                        $guruId = auth()->id();
+                        return Mapel::where('guru_id', $guruId)
+                            ->pluck('nama_mapel', 'id')
+                            ->toArray();
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -147,19 +161,5 @@ class NilaiResource extends Resource
     public static function getNavigationSort(): ?int
     {
         return 5; // Paling atas di grup Akademik
-    }
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-
-        // Cek kalau user login adalah guru
-        if (Auth::check() && Auth::user()->role === 'guru') {
-            $guruId = Auth::id(); // id user guru
-            $query->whereHas('mapel', function ($q) use ($guruId) {
-                $q->where('guru_id', $guruId);
-            });
-        }
-
-        return $query;
     }
 }
