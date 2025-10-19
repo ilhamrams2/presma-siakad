@@ -30,4 +30,24 @@ class Siswa extends Model
     {
         return $this->hasMany(Nilai::class);
     }
+    protected static function booted()
+{
+    static::creating(function ($siswa) {
+        // Cek kalau belum ada user terkait
+        if (!$siswa->user_id) {
+            $email = $siswa->email ?? strtolower(str_replace(' ', '', $siswa->nama)) . '@smkprestasiprima.sch.id';
+
+            // Buat user baru
+            $user = \App\Models\User::create([
+                'name' => $siswa->nama,
+                'email' => $email,
+                'password' => bcrypt('password123'), // password default
+                'role' => 'siswa',
+            ]);
+
+            // Set user_id di siswa
+            $siswa->user_id = $user->id;
+        }
+    });
+}
 }

@@ -27,14 +27,13 @@ class MapelResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('guru_id')
+                Forms\Components\Select::make('guru_id')
+                    ->label('Guru')
                     ->required()
-                    ->numeric()
                     ->relationship('guru', 'nama'),
                 Forms\Components\TextInput::make('nama_mapel')
                     ->required()
-                    ->maxLength(255)
-                    ->relationship('guru', 'nama'),
+                    ->maxLength(255),
             ]);
     }
 
@@ -42,8 +41,8 @@ class MapelResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('guru_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('guru.nama')
+                    ->label('Guru')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('nama_mapel')
                     ->searchable(),
@@ -91,9 +90,9 @@ class MapelResource extends Resource
     {
         return 'Akademik';
     }
-    
+
     public static function getNavigationSort(): ?int
     {
         return 3; // Paling atas di grup Akademik
-    } 
+    }
 }

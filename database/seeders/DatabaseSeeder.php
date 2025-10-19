@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
+use App\Models\Mapel;
+use App\Models\Siswa;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -22,6 +25,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             GuruSeeder::class,
+            JurusanSeeder::class,
+            KelasSeeder::class,
+            MapelSeeder::class,
+            // SiswaSeeder::class,
         ]);
     }
 }
