@@ -4,14 +4,20 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\NilaiResource\Pages;
 use App\Filament\Admin\Resources\NilaiResource\RelationManagers;
+use App\Models\Kelas;
+use App\Models\Mapel;
 use App\Models\Nilai;
+use App\Models\Siswa;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class NilaiResource extends Resource
 {
@@ -26,19 +32,52 @@ class NilaiResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('siswa_id')
+                // Pilih Kelas dulu
+                Select::make('kelas_id')
+                    ->label('Kelas')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('mapel_id')
+                    ->options(Kelas::pluck('nama_kelas', 'id'))
+                    ->reactive() // biar dependent dropdown bekerja
+                    ->afterStateUpdated(fn($set) => $set('siswa_id', null)),
+
+                // Pilih siswa dari kelas terpilih
+                Select::make('siswa_id')
+                    ->label('Nama Siswa')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('nilai')
+                    ->options(function ($get) {
+                        $kelasId = $get('kelas_id');
+                        if (!$kelasId) return [];
+                        return Siswa::where('kelas_id', $kelasId)
+                            ->with('user')
+                            ->get()
+                            ->mapWithKeys(fn($siswa) => [$siswa->id => $siswa->user->name])
+                            ->toArray();
+                    })
+                    ->searchable(),
+
+                // Pilih mapel milik guru login
+                Select::make('mapel_id')
+                    ->label('Mata Pelajaran')
+                    ->required()
+                    ->options(function () {
+                        $guruId = auth()->id();
+                        return Mapel::where('guru_id', $guruId)
+                            ->pluck('nama_mapel', 'id')
+                            ->toArray();
+                    }),
+
+                // Input nilai
+                TextInput::make('nilai')
                     ->required()
                     ->numeric()
                     ->default(0.00),
-                Forms\Components\TextInput::make('semester')
+
+                TextInput::make('semester')
+                    ->label('Semester')
                     ->maxLength(20),
-                Forms\Components\TextInput::make('tahun_ajaran')
+
+                TextInput::make('tahun_ajaran')
+                    ->label('Tahun Ajaran')
                     ->maxLength(20),
             ]);
     }
@@ -84,14 +123,14 @@ class NilaiResource extends Resource
                 Tables\Actions\CreateAction::make(),
             ]);
     }
-    
+
     public static function getRelations(): array
     {
         return [
             //
         ];
     }
-    
+
     public static function getPages(): array
     {
         return [
@@ -104,9 +143,23 @@ class NilaiResource extends Resource
     {
         return 'Akademik';
     }
-    
+
     public static function getNavigationSort(): ?int
     {
         return 5; // Paling atas di grup Akademik
-    }    
+    }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Cek kalau user login adalah guru
+        if (Auth::check() && Auth::user()->role === 'guru') {
+            $guruId = Auth::id(); // id user guru
+            $query->whereHas('mapel', function ($q) use ($guruId) {
+                $q->where('guru_id', $guruId);
+            });
+        }
+
+        return $query;
+    }
 }

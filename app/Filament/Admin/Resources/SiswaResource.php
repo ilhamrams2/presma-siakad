@@ -50,14 +50,11 @@ class SiswaResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('user.name')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('kelas_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('kelas.nama_kelas')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('jurusan_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('jurusan.nama_jurusan')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('nis')
                     ->searchable(),

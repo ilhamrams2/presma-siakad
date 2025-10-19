@@ -25,24 +25,29 @@ class SiswaSeeder extends Seeder
         $kelasIds = Kelas::pluck('id')->toArray();
         $jurusanIds = Jurusan::pluck('id')->toArray();
 
-        for ($i = 1; $i <= 10; $i++) {
-            $nama = $faker->name;
-            $slugNama = Str::slug($nama, '.');
-            $email = strtolower($slugNama) . '@smkprestasiprima.sch.id';
+        if (empty($kelasIds) || empty($jurusanIds)) {
+            $this->command->info('Seeder gagal: pastikan tabel kelas dan jurusan sudah ada isinya!');
+            return;
+        }
 
-            // Buat user dulu
+        for ($i = 1; $i <= 50; $i++) { // langsung 50 siswa
+            $namaSiswa = $faker->name;
+            $slugNama = Str::slug($namaSiswa, '.');
+            $emailSiswa = strtolower($slugNama) . '@smkprestasiprima.sch.id';
+
+            // Buat akun user untuk siswa
             $user = User::create([
-                'name' => $nama,
+                'name' => $namaSiswa,
                 'username' => $slugNama,
-                'email' => $email,
-                'password' => bcrypt('password123'),
+                'email' => $emailSiswa,
+                'password' => bcrypt('password123'), // password default
                 'role' => 'siswa',
             ]);
 
-            // Buat siswa dan hubungkan ke user, kelas, jurusan
+            // Buat data siswa
             Siswa::create([
                 'user_id' => $user->id,
-                'nis' => '2025' . rand(1000, 9999) . $i, // generate NIS unik
+                'nis' => '2025' . str_pad($i, 4, '0', STR_PAD_LEFT), // NIS unik 20250001 dst
                 'kelas_id' => $faker->randomElement($kelasIds),
                 'jurusan_id' => $faker->randomElement($jurusanIds),
                 'alamat' => $faker->address,

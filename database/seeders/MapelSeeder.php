@@ -23,7 +23,7 @@ class MapelSeeder extends Seeder
         $faker = Faker::create('id_ID');
 
         // Ambil semua guru dari users
-        $guruIds = User::where('role', 'guru')->pluck('id')->toArray();
+        $guruIds = Guru::pluck('id')->toArray();
 
         if (empty($guruIds)) {
             $this->command->info('Seeder gagal: belum ada guru di tabel users!');
